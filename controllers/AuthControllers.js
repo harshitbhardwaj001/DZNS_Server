@@ -1,5 +1,7 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { genSalt, hash, compare } from "bcrypt";
+// import { genSalt, hash, compare } from "bcrypt";
+import pkg from "bcryptjs";
+const { genSalt, hash, compare } = pkg;
 import { readSync, renameSync } from "fs";
 import jwt from "jsonwebtoken";
 
@@ -82,7 +84,7 @@ export const getUserInfo = async (req, res, next) => {
     }
   } catch (err) {
     console.log(err);
-    return res.status(500).send("Internal Srver Error.");
+    return res.status(500).send("Internal Server Error.");
   }
 };
 

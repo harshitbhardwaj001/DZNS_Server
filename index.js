@@ -3,6 +3,7 @@ import { config } from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/AuthRoutes.js";
 import cookieParser from "cookie-parser";
+import { globalOptionsMiddleware } from "./middlewares/GlobalOptionsMiddleware.js";
 import { servicesRoutes } from "./routes/ServicesRoutes.js";
 import { ordersRoutes } from "./routes/OrderRoutes.js";
 import { messageRoutes } from "./routes/MessageRoutes.js";
@@ -15,7 +16,7 @@ const port = process.env.PORT || 9001;
 
 app.use(
   cors({
-    origin: "https://dzns-main-eight.vercel.app",
+    origin: [process.env.PUBLIC_URL],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
@@ -26,6 +27,8 @@ app.use("/uploads", express.static("uploads"));
 
 app.use(cookieParser());
 app.use(json());
+
+app.use(globalOptionsMiddleware);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/services", servicesRoutes);

@@ -1,7 +1,5 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-// import { genSalt, hash, compare } from "bcrypt";
-import pkg from "bcryptjs";
-const { genSalt, hash, compare } = pkg;
+import { genSalt, hash, compare } from "bcrypt";
 import { readSync, renameSync } from "fs";
 import jwt from "jsonwebtoken";
 
@@ -135,7 +133,7 @@ export const setUserImage = async (req, res, next) => {
     if (req.file) {
       if (req.userId) {
         const date = Date.now();
-        let fileName = "uploads/profiles/" + date + req.file.originalname;
+        let fileName = "/tmp/uploads/profiles/" + date + req.file.originalname;
         renameSync(req.file.path, fileName);
         const prisma = new PrismaClient();
         await prisma.user.update({

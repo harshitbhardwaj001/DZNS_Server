@@ -132,15 +132,16 @@ export const setUserImage = async (req, res, next) => {
   try {
     if (req.file) {
       if (req.userId) {
-        const date = Date.now();
-        let fileName = "/tmp/uploads/profiles/" + date + req.file.originalname;
-        renameSync(req.file.path, fileName);
         const prisma = new PrismaClient();
+
+        // Update the user profile with the S3 link directly
         await prisma.user.update({
           where: { id: req.userId },
-          data: { profileImage: fileName },
+          data: { profileImage: req.s3Link[req.file] },
         });
-        return res.status(200).json({ img: fileName });
+
+        // Return the S3 link in the response
+        return res.status(200).json({ imageUrl: req.s3Link });
       }
       return res.status(400).send("Cookie Error.");
     }

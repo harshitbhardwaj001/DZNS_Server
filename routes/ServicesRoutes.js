@@ -8,18 +8,19 @@ import {
   searchServices,
 } from "../controllers/ServicesControllers.js";
 import { Router } from "express";
+import uploadUserMiddleware from "../middlewares/UploadUser.js";
 
 export const servicesRoutes = Router();
 
-const upload = multer({ dest: "uploads/" });
+// const upload = multer({ dest: "uploads/" });
 
-servicesRoutes.post("/add", verifyToken, upload.array("images"), addServices);
+servicesRoutes.post("/add", verifyToken, addServices);
 servicesRoutes.get("/get-user-services", verifyToken, getUserAuthServices);
 servicesRoutes.get("/get-service-data/:serviceId", getServiceData);
 servicesRoutes.put(
   "/edit-service/:serviceId",
   verifyToken,
-  upload.array("images"),
+  uploadUserMiddleware("images"),
   editService
 );
 servicesRoutes.get("/search-services", searchServices);

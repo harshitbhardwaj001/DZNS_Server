@@ -1,19 +1,49 @@
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { PrismaClient } from "@prisma/client";
 import { existsSync, renameSync, unlinkSync } from "fs";
+import fs from "fs";
+import mime from "mime-types";
+
+const bucketName = "dzns-ecommerce";
+
+const s3Client = new S3Client({
+  region: "ap-south-1",
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+  },
+});
 
 export const addServices = async (req, res, next) => {
   try {
-    if (req.files) {
-      const fileKeys = Object.keys(req.files);
-      const fileNames = [];
-      fileKeys.forEach((file) => {
-        const date = Date.now();
-        renameSync(
-          req.files[file].path,
-          "uploads/" + date + req.files[file].originalname
+    if (req.files && req.userId) {
+      const files = req.files;
+      const fileNames = []
+
+      try {
+        fileNames.push(await Promise.all(
+          files.map(async (file) => {
+            const ext = file.originalname.split(".").pop();
+            const newFilename = Date.now() + "." + ext;
+
+            await s3Client.send(
+              new PutObjectCommand({
+                Bucket: "your-s3-bucket-name",
+                Key: newFilename,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+                ACL: "public-read",
+              })
+            );
+
+            return `https://${bucketName}.s3.amazonaws.com/${newFilename}`;
+          }))
         );
-        fileNames.push(date + req.files[file].originalname);
-      });
+      } catch (error) {
+        console.error(error);
+        return res.status(500).send("Internal Server Error");
+      }
+
       if (req.query) {
         const {
           title,
@@ -46,6 +76,7 @@ export const addServices = async (req, res, next) => {
         return res.status(201).send("Successfully created the service.");
       }
     }
+
     return res.status(400).send("All properties should be required.");
   } catch (err) {
     console.log(err);
@@ -91,16 +122,7 @@ export const getServiceData = async (req, res, next) => {
 export const editService = async (req, res, next) => {
   try {
     if (req.files) {
-      const fileKeys = Object.keys(req.files);
-      const fileNames = [];
-      fileKeys.forEach((file) => {
-        const date = Date.now();
-        renameSync(
-          req.files[file].path,
-          "uploads/" + date + req.files[file].originalname
-        );
-        fileNames.push(date + req.files[file].originalname);
-      });
+      const fileNames = req.files.map((file) => req.s3Link[file.fieldname]);
       if (req.query) {
         const {
           title,

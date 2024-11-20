@@ -16,33 +16,35 @@ const s3Client = new S3Client({
 
 export const addServices = async (req, res, next) => {
   try {
-    if (req.files && req.userId) {
+    console.log(req.files);
+    if (req.files) {
+      const fileNames = [];
       const files = req.files;
-      const fileNames = []
+      console.log(files);
 
-      try {
-        fileNames.push(await Promise.all(
-          files.map(async (file) => {
-            const ext = file.originalname.split(".").pop();
-            const newFilename = Date.now() + "." + ext;
+      await Promise.all(
+        files.map(async (file) => {
+          const ext = file.originalname.split(".").pop();
+          const newFilename = Date.now() + "." + ext;
 
+          try {
             await s3Client.send(
               new PutObjectCommand({
-                Bucket: "your-s3-bucket-name",
+                Bucket: bucketName,
                 Key: newFilename,
                 Body: file.buffer,
-                ContentType: file.mimetype,
                 ACL: "public-read",
+                ContentType: file.mimetype,
               })
             );
 
-            return `https://${bucketName}.s3.amazonaws.com/${newFilename}`;
-          }))
-        );
-      } catch (error) {
-        console.error(error);
-        return res.status(500).send("Internal Server Error");
-      }
+            const link = `https://${bucketName}.s3.amazonaws.com/${newFilename}`;
+            fileNames.push(link);
+          } catch (err) {
+            console.log(err);
+          }
+        })
+      );
 
       if (req.query) {
         const {
